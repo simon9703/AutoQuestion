@@ -2,6 +2,7 @@ const log = document.getElementById('log');
 const startBtn = document.getElementById('start');
 const apiKeyInput = document.getElementById('apiKey');
 const saveKeyBtn = document.getElementById('saveKey');
+let running = false;
 
 function append(text) {
   log.textContent += text + '\n';
@@ -61,25 +62,47 @@ async function askAI(text) {
   return answer;
 }
 
-async function solve() {
-  startBtn.disabled = true;
+function send(tabId, msg) {
+  return new Promise(res => chrome.tabs.sendMessage(tabId, msg, res));
+}
+
+async function solveCurrent(tabId) {
   append('Capturing...');
   const img = await capture();
   const text = await recognize(img);
   append(text);
   const answer = await askAI(text);
-  if (!answer) {
-    startBtn.disabled = false;
-    return;
-  }
+  if (!answer) return false;
   const type = inferType(text);
-  chrome.tabs.query({active: true, currentWindow: true}, tabs => {
-    chrome.tabs.sendMessage(tabs[0].id, {type: 'fill', questionType: type, answer});
-    chrome.tabs.sendMessage(tabs[0].id, {type: 'clickButton', text: 'Next'});
-    chrome.tabs.sendMessage(tabs[0].id, {type: 'clickButton', text: '下一题'});
-    chrome.tabs.sendMessage(tabs[0].id, {type: 'clickButton', text: 'Submit'});
-    chrome.tabs.sendMessage(tabs[0].id, {type: 'clickButton', text: '提交'});
-  });
+  await send(tabId, {type: 'fill', questionType: type, answer});
+  const hasNext = await send(tabId, {type: 'hasButton', text: 'Next'});
+  const hasCnNext = await send(tabId, {type: 'hasButton', text: '下一题'});
+  const hasSubmit = await send(tabId, {type: 'hasButton', text: 'Submit'});
+  const hasCnSubmit = await send(tabId, {type: 'hasButton', text: '提交'});
+  if (hasNext?.exists || hasCnNext?.exists) {
+    await send(tabId, {type: 'clickButton', text: 'Next'});
+    await send(tabId, {type: 'clickButton', text: '下一题'});
+    return true;
+  } else if (hasSubmit?.exists || hasCnSubmit?.exists) {
+    await send(tabId, {type: 'clickButton', text: 'Submit'});
+    await send(tabId, {type: 'clickButton', text: '提交'});
+    return false;
+  }
+  append('No navigation button found');
+  return false;
+}
+
+async function solve() {
+  running = true;
+  startBtn.disabled = true;
+  const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+  while (running) {
+    const cont = await solveCurrent(tab.id);
+    if (!cont) break;
+    await new Promise(r => setTimeout(r, 2000));
+  }
+  running = false;
+  startBtn.disabled = false;
 }
 
 function inferType(text) {

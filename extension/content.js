@@ -42,7 +42,12 @@ function fillAnswer(type, answer) {
   }
 }
 
-chrome.runtime.onMessage.addListener((msg) => {
+function hasButton(text) {
+  const buttons = document.querySelectorAll('button, input[type="button"], input[type="submit"]');
+  return Array.from(buttons).some(btn => btn.innerText.includes(text) || btn.value?.includes(text));
+}
+
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'fill') {
     fillAnswer(msg.questionType, msg.answer);
   } else if (msg.type === 'clickButton') {
@@ -52,5 +57,8 @@ chrome.runtime.onMessage.addListener((msg) => {
         btn.click();
       }
     });
+  } else if (msg.type === 'hasButton') {
+    sendResponse({exists: hasButton(msg.text)});
   }
+  return true;
 });
