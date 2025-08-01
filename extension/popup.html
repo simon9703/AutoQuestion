@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    body { font-family: sans-serif; width: 300px; }
+    textarea { width: 100%; height: 150px; }
+  </style>
+</head>
+<body>
+  <input id="apiKey" type="password" placeholder="OpenAI API key" />
+  <button id="saveKey">Save Key</button>
+  <button id="start">Capture & Solve</button>
+  <button id="stop" disabled>Stop</button>
+  <div><strong>Answered:</strong> <span id="count">0</span></div>
+  <div><strong>Actions this question:</strong> <span id="lastActions">0</span></div>
+  <div><strong>Total actions:</strong> <span id="totalActions">0</span></div>
+  <div>
+    <strong>Question:</strong>
+    <div id="question"></div>
+  </div>
+  <div>
+    <strong>Analysis:</strong>
+    <div id="analysis"></div>
+  </div>
+  <pre id="log"></pre>
+  <script src="popup.js"></script>
+</body>
+</html>
