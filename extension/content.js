@@ -11,7 +11,7 @@ function getUniqueSelector(el) {
       const classes = el.className.trim().split(/\s+/).slice(0, 2).join('.');
       if (classes) selector += `.${classes}`;
     }
-    const sibling = Array.from(el.parentNode.children).filter(e => e.nodeName === el.nodeName);
+    const sibling = Array.from(el.parentNode.children).filter(e => e.nodeName == el.nodeName);
     if (sibling.length > 1) selector += `:nth-child(${Array.from(el.parentNode.children).indexOf(el)+1})`;
     path.unshift(selector);
     el = el.parentNode;
